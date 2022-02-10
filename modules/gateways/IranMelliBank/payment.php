@@ -173,3 +173,4 @@ else if($action==='send') {
         <img src='/modules/gateways/$cb_gw_name/logo.png' alt='$cb_gw_name'>";
     }
 }
+
