@@ -70,6 +70,38 @@ function notifyEmail($notify) {
     }
 }
 
+/**
+ * Sing Maker
+ * @param $str
+ * @param $key
+ * @return false|string
+ */
+function sing_maker($str, $key)
+{
+    $method 	= 'DES-EDE3';
+    $iv 		= openssl_random_pseudo_bytes(openssl_cipher_iv_length($method));
+    return openssl_encrypt($str, $method, $key, 0, $iv);
+}
+
+/**
+ * Curl Webservice
+ * @param $url
+ * @param false $data
+ * @return bool|string
+ */
+function curl_webservice($url, $data = false)
+{
+    $curl = curl_init($url);
+    curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "POST");
+    curl_setopt($curl, CURLOPT_POSTFIELDS,$data);
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($curl, CURLOPT_HTTPHEADER, array('Content-Type: application/json','Content-Length: ' . strlen($data)));
+    $result = curl_exec($curl);
+    curl_close($curl);
+    return $result;
+}
+
 if($action==='callback') {
     $tran_id  = $order_id  = $invoice_id;
     $ref_code = $_POST['SaleReferenceId'];
@@ -141,6 +173,12 @@ if($action==='callback') {
     }
 }
 else if($action==='send') {
+    $key 			= $modules['cb_gw_TerminalKey'];
+    $MerchantId 	= $modules['cb_gw_MerchantId'];
+    $TerminalId 	= $modules['cb_gw_TerminalId'];
+    $LocalDateTime 	= date("m/d/Y g:i:s a");
+    $SignData 		= sing_maker("$TerminalId;$OrderId;$Amount","$key");
+
     $callback_URL   = $CONFIG['SystemURL']."/modules/gateways/$cb_gw_name/payment.php?a=callback&invoiceid=". $invoice_id.'&amount='.$amount;
     $localDate		= date('Ymd');
     $localTime		= date('Gis');
