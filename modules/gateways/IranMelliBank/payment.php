@@ -103,70 +103,36 @@ function curl_webservice($url, $data = false)
 }
 
 if($action==='callback') {
-    $tran_id  = $order_id  = $invoice_id;
-    $ref_code = $_POST['SaleReferenceId'];
+    $key 		= $modules['cb_gw_TerminalKey'];
+    $OrderId 	= (isset($_POST["OrderId"])) 	? $_POST["OrderId"] 	: "";
+    $Token 		= (isset($_POST["token"])) 		? $_POST["token"] 		: "";
+    $ResCode 	= (isset($_POST["ResCode"])) 	? $_POST["ResCode"] 	: "";
+    $arrres = null;
     if(!empty($invoice_id)) {
-        $cb_output['invoice_id'] = $invoice_id;
-        if(!empty($order_id) && !empty($tran_id) && !empty($ref_code)) {
-            $cb_output['tran_id'] = $tran_id;
-            $invoice_id = checkCbInvoiceID($invoice_id, $modules['name']);
-            $results = select_query("tblinvoices", "", array("id" => $invoice_id));
-            $data = mysql_fetch_array($results);
-            $db_amount = strtok($data['total'], '.');
-            if ($_POST['ResCode'] == '0') {
-                include_once('nusoap.php');
-                $client = new nusoap_client('https://bpm.shaparak.ir/pgwchannel/services/pgw?wsdl');
-                $namespace='http://interfaces.core.sw.bps.com/';
-                $parameters = array(
-                    'terminalId' 		=> $modules['cb_gw_terminal_id'],
-                    'userName' 			=> $modules['cb_gw_user'],
-                    'userPassword' 		=> $modules['cb_gw_pass'],
-                    'orderId'           => $_POST['SaleOrderId'],
-                    'saleOrderId'       => $_POST['SaleOrderId'],
-                    'saleReferenceId'   => $_POST['SaleReferenceId']
-                );
-                $cb_output['res']['result'] = $bpVerifyRequest = $client->call('bpVerifyRequest', $parameters, $namespace);
-                if($bpVerifyRequest == 0) {
-                    $bpSettleRequest = $client->call('bpSettleRequest', $parameters, $namespace);
-                    if($bpSettleRequest == 0) {
-                        $cartNumber = $_POST['CardHolderPan'];
-                        addInvoicePayment($invoice_id, $ref_code, $amount, 0, $cb_gw_name);
-                        logTransaction($modules["name"], array('invoiceid' => $invoice_id,'order_id' => $order_id,'amount' => $amount." ".(($modules['cb_gw_unit']>1) ? 'Toman' : 'Rial'),'tran_id' => $tran_id,'RefId' => $_POST['RefId'],'SaleReferenceId' => $ref_code,'CardNumber' => $cartNumber,'status' => "OK"), "موفق");
-                        $notify['title'] = $cb_gw_name.' | '."تراکنش موفق";
-                        $notify['text']  = "\n\rGateway: $cb_gw_name\n\rAmount: $amount ".(($modules['cb_gw_unit']>1) ? 'Toman' : 'Rial')."\n\rOrder: $order_id\n\rInvoice: $invoice_id\n\rCart Number: $cartNumber";
-                        if($modules['cb_email_on_success']) notifyEmail($notify);
-                        if($modules['cb_telegram_on_success']) notifyTelegram($notify);
-                    }
-                    else {
-                        $client->call('bpReversalRequest', $parameters, $namespace);
-                        logTransaction($modules["name"], array('invoiceid' => $invoice_id,'order_id' => $order_id,'amount' => $amount." ".(($modules['cb_gw_unit']>1) ? 'Toman' : 'Rial'),'tran_id' => $tran_id, 'status' => $bpSettleRequest), "ناموفق");
-                        $notify['title'] = $cb_gw_name.' | '."تراکنش ناموفق";
-                        $notify['text']  = "\n\rGateway: $cb_gw_name\n\rAmount: $amount ".(($modules['cb_gw_unit']>1) ? 'Toman' : 'Rial')."\n\rOrder: $order_id\n\rInvoice: $invoice_id\n\rError: به دلیل رخ دادن خطا در پرداخت، درخواست بازگشت وجه داده شد.";
-                        if($modules['cb_email_on_error']) notifyEmail($notify);
-                        if($modules['cb_telegram_on_error']) notifyTelegram($notify);
-                    }
-                }
-                else {
-                    $client->call('bpReversalRequest', $parameters, $namespace);
-                    logTransaction($modules["name"], array('invoiceid' => $invoice_id,'order_id' => $order_id,'amount' => $amount." ".(($modules['cb_gw_unit']>1) ? 'Toman' : 'Rial'),'tran_id' => $tran_id, 'status' => $bpVerifyRequest), "ناموفق");
-                    $notify['title'] = $cb_gw_name.' | '."تراکنش ناموفق";
-                    $notify['text']  = "\n\rGateway: $cb_gw_name\n\rAmount: $amount ".(($modules['cb_gw_unit']>1) ? 'Toman' : 'Rial')."\n\rOrder: $order_id\n\rInvoice: $invoice_id\n\rError: به دلیل رخ دادن خطا در پرداخت، درخواست بازگشت وجه داده شد.";
-                    if($modules['cb_email_on_error']) notifyEmail($notify);
-                    if($modules['cb_telegram_on_error']) notifyTelegram($notify);
-                }
-            } else {
-                logTransaction($modules["name"], array('invoiceid' => $invoice_id,'order_id' => $order_id,'amount' => $amount." ".(($modules['cb_gw_unit']>1) ? 'Toman' : 'Rial'),'tran_id' => $tran_id, 'status' => $_POST['ResCode']), "ناموفق");
-                $notify['title'] = $cb_gw_name.' | '."تراکنش ناموفق";
-                $notify['text']  = "\n\rGateway: $cb_gw_name\n\rAmount: $amount ".(($modules['cb_gw_unit']>1) ? 'Toman' : 'Rial')."\n\rOrder: $order_id\n\rInvoice: $invoice_id\n\rError: به دلیل رخ دادن خطا در پرداخت، درخواست بازگشت وجه داده شد.";
-                if($modules['cb_email_on_error']) notifyEmail($notify);
-                if($modules['cb_telegram_on_error']) notifyTelegram($notify);
-            }
-
-
+        if($ResCode==0) {
+            $verifyData = array('Token'=>$Token,'SignData'=>sing_maker($Token,$key));
+            $str_data 	= json_encode($verifyData);
+            $res 		= curl_webservice('https://sadad.shaparak.ir/vpg/api/v0/Advice/Verify',$str_data);
+            $arrres 	= json_decode($res);
+        }
+        if($arrres->ResCode!=-1 && $ResCode==0) {
+            addInvoicePayment($invoice_id, $arrres->RetrivalRefNo, $amount, 0, $cb_gw_name);
+            logTransaction($modules["name"]  ,  array( 'invoiceid'=>$invoice_id,'order_id'=>$invoice_id,'amount'=>$amount." ".(($modules['cb_gw_unit']>1) ? 'Toman' : 'Rial'),'tran_id'=>$arrres->SystemTraceNo, 'refcode'=>$arrres->RetrivalRefNo, 'status'=>'paid' )  ,"موفق");
+            $notify['title'] = $cb_gw_name.' | '."تراکنش موفق";
+            $notify['text']  = "\n\rGateway: $cb_gw_name\n\rAmount: $amount ".(($modules['cb_gw_unit']>1) ? 'Toman' : 'Rial')."\n\rOrder: $invoice_id\n\rInvoice: $invoice_id\n\r";
+            if($modules['cb_email_on_success']) notifyEmail($notify);
+            if($modules['cb_telegram_on_success']) notifyTelegram($notify);
+        } else {
+            logTransaction($modules["name"]  ,  array( 'invoiceid'=>$OrderId,'order_id'=>$OrderId,'amount'=>$amount." ".(($modules['cb_gw_unit']>1) ? 'Toman' : 'Rial'),'status'=>'unpaid' )  ,"ناموفق - $ResCode");
+            $notify['title'] = $cb_gw_name.' | '."تراکنش ناموفق";
+            $notify['text']  = "\n\rGateway: $cb_gw_name\n\rAmount: $amount ".(($modules['cb_gw_unit']>1) ? 'Toman' : 'Rial')."\n\rOrder: $OrderId\n\rInvoice: $OrderId\n\r";
+            if($modules['cb_email_on_error']) notifyEmail($notify);
+            if($modules['cb_telegram_on_error']) notifyTelegram($notify);
         }
         $action = $CONFIG['SystemURL'] . "/viewinvoice.php?id=" . $invoice_id;
         header('Location: ' . $action);
         //print("<pre>".print_r($cb_output,true)."</pre>");
+        exit;
     }
     else {
         echo "invoice id is blank";
@@ -199,4 +165,3 @@ else if($action==='send') {
         die($arrres->Description);
     }
 }
-
