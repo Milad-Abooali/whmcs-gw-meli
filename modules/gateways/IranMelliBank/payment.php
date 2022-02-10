@@ -161,6 +161,7 @@ else if($action==='send') {
         $Token 	= $arrres->Token;
         $url 	= "https://sadad.shaparak.ir/VPG/Purchase?Token=$Token";
         header("Location:$url");
+        exit;
     } else {
         die($arrres->Description);
     }

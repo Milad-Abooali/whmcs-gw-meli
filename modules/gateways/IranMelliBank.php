@@ -40,7 +40,7 @@ function IranMelliBank_MetaData()
 function IranMelliBank_config()
 {
     return [
-        "FriendlyName" => ["Type" => "System", "Value" => "بانک ملت ایران"],
+        "FriendlyName"       => ["Type" => "System", "Value" => "بانک ملی ایران"],
 
         // Gateway Setup
         "cb_gw_MerchantId"   => ["FriendlyName" => "کد پذيرنده", "Type" => "text", "Size" => "50"],
