@@ -15,8 +15,6 @@
  **************************************************************************
  */
 
-$cb_gw_name = 'IranMelliBank';
-
 /**
  * Meta Data
  * @return array
@@ -79,11 +77,10 @@ function IranMelliBank_config()
  */
 function IranMelliBank_link($params)
 {
-    global $cb_gw_name;
-    return '<form method="post" action="modules/gateways/'.$cb_gw_name.'/payment.php?a=send">
+    return '<form method="post" action="modules/gateways/IranMelliBank/payment.php?a=send">
 	<input type="hidden" name="invoiceid" value="'.$params['invoiceid'].'">
 	<input type="hidden" name="amount" value="'.round(($params['amount']-'.00') * $params['cb_gw_unit']).'">
 	<input type="hidden" name="email" value="'.$params['clientdetails']['email']. '">
 	<input type="submit" name="pay" value="پرداخت"></form>
-	<img src="/modules/gateways/'.$cb_gw_name.'/logo.png" alt="Mellat Bank" style="max-width:170px;height:45px;">';
+	<img src="/modules/gateways/IranMelliBank/logo.png" alt="Melli Bank" style="max-width:170px;height:45px;">';
 }
