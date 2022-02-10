@@ -177,38 +177,26 @@ else if($action==='send') {
     $MerchantId 	= $modules['cb_gw_MerchantId'];
     $TerminalId 	= $modules['cb_gw_TerminalId'];
     $LocalDateTime 	= date("m/d/Y g:i:s a");
-    $SignData 		= sing_maker("$TerminalId;$OrderId;$Amount","$key");
-
+    $SignData 		= sing_maker("$TerminalId;$invoice_id;$amount","$key");
     $callback_URL   = $CONFIG['SystemURL']."/modules/gateways/$cb_gw_name/payment.php?a=callback&invoiceid=". $invoice_id.'&amount='.$amount;
-    $localDate		= date('Ymd');
-    $localTime		= date('Gis');
-    $additionalData	= '';
-    $payerId		= 0;
-    include_once('nusoap.php');
-    $parameters = array(
-        'terminalId' 		=> $modules['cb_gw_terminal_id'],
-        'userName' 			=> $modules['cb_gw_user'],
-        'userPassword' 		=> $modules['cb_gw_pass'],
-        'orderId' 			=> time(),
-        'amount' 			=> $amount,
-        'localDate' 		=> $localDate,
-        'localTime' 		=> $localTime,
-        'additionalData' 	=> $additionalData,
-        'callBackUrl' 		=> $callback_URL,
-        'payerId' 			=> $payerId
+    $data 			= array(
+        'TerminalId'	=> $TerminalId,
+        'MerchantId'	=> $MerchantId,
+        'Amount' 		=> $amount,
+        'SignData' 		=> $SignData,
+        'ReturnUrl' 	=> $callback_URL,
+        'LocalDateTime' => $LocalDateTime,
+        'OrderId' 		=> $invoice_id
     );
-    $client 	= new nusoap_client('https://bpm.shaparak.ir/pgwchannel/services/pgw?wsdl');
-    $namespace 	= 'http://interfaces.core.sw.bps.com/';
-    $result 	= $client->call('bpPayRequest', $parameters, $namespace);
-    if($client->fault) die("There was a problem connecting to bank");
-    $err = $client->getError();
-    if($err) die("Error : ". $err);
-    $res 		= explode (',',$result);
-    if($res[0] == "0") {
-        echo "<form name='$cb_gw_name' action='https://bpm.shaparak.ir/pgwchannel/startpay.mellat' method='post'>
-        <input type='hidden' id='RefId' name='RefId' value='". $res[1] ."'></form>
-        <script>document.forms['$cb_gw_name'].submit()</script>
-        <img src='/modules/gateways/$cb_gw_name/logo.png' alt='$cb_gw_name'>";
+    $str_data 	= json_encode($data);
+    $res 		= curl_webservice('https://sadad.shaparak.ir/vpg/api/v0/Request/PaymentRequest',$str_data);
+    $arrres 	= json_decode($res);
+    if($arrres->ResCode==0) {
+        $Token 	= $arrres->Token;
+        $url 	= "https://sadad.shaparak.ir/VPG/Purchase?Token=$Token";
+        header("Location:$url");
+    } else {
+        die($arrres->Description);
     }
 }
 
