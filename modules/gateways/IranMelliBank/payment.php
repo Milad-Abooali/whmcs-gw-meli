@@ -156,8 +156,73 @@ function get_db_amount(){
     return $db_amount * $modules['cb_gw_unit'];
 }
 
-if($action==='callback') {
+/**
+ * Error Codes Translator
+ * @param string $ResCode
+ * @return string
+ */
+function translate_error($ResCode='')
+{
+    switch($ResCode)
+    {
+        case '-1':$prompt="خطا درپردازش اطلاعات ارسالی";break;
+        case '-3':$prompt="ورودی حاوی کارکتر غیرمجاز";break;
+        case '-4':$prompt="کلمه عبور یا کد فروشنده اشتباه است.";break;
+        case '-6':$prompt="سند قبلا برگشت کامل یافته است.";break;
+        case '-7':$prompt="رسید دیجیتال خالی است.";break;
+        case '-8':$prompt="طول ورودی بیشتر از حد مجاز است";break;
+        case '-9':$prompt="وجود کاراکترهای غیرمجاز در مبلغ بازگشتی";break;
+        case '-10':$prompt="رسید دیجیتال بصورت Base64 نیست.";break;
+        case '-11':$prompt="طول ورودی ها کمتر از حد مجاز است.";break;
+        case '-12':$prompt="مبلغ برگشتی منفی است.";break;
+        case '-13':$prompt="مبلغ برگشتی برای برگشت جزئی بیش از مبلغ برگشت خورده ی رسید دیجیتال است.";break;
+        case '-14':$prompt="چنین تراکنشی تعریف نشده است.";break;
+        case '-15':$prompt="مبلغ برگشتی بصورت اعشاری داده شده است.";break;
+        case '-16':$prompt="خطای داخلی سیستم";break;
+        case '-17':$prompt="برگشت زدن جزوی تراکنش مجاز نمیباشد.";break;
+        case '-18':$prompt="ای پی سرور فروشنده نامعتبر است.";break;
+        default:$prompt="خطاي نامشخص.";
+    }
+    return $prompt;
+}
 
+if($action==='callback') {
+    if(empty($invoice_id)) die('Invoice ID Missing!');
+    $cb_output['invoice_id'] = $invoice_id;
+    // Response Items From Bank
+    $key 		= $modules['cb_gw_TerminalKey'];
+    $OrderId 	= (isset($_POST["OrderId"])) 	? $_POST["OrderId"] 	: "";
+    $Token 		= (isset($_POST["token"])) 		? $_POST["token"] 		: "";
+    $ResCode 	= (isset($_POST["ResCode"])) 	? $_POST["ResCode"] 	: "";
+    // Check Invoice ID by WHMCS
+    $invoice_id = checkCbInvoiceID($invoice_id, $modules['name']);
+    // Check Invoice Amount From Database
+    $db_amount_rial = get_db_amount();
+    $cb_output['db_amount_rial'] = $db_amount_rial;
+
+    $log = array(
+        'Invoice'        => $invoice_id,
+        'Amount'         => number_format($amount).(($modules['cb_gw_unit']>1)?' Toman':' Rial'),
+        'Order'          => $OrderId
+    );
+    $arrres = null;
+    if($ResCode==0) {
+        $verifyData = array('Token'=>$Token,'SignData'=>sing_maker($Token,$key));
+        $str_data 	= json_encode($verifyData);
+        $res 		= curl_webservice('https://sadad.shaparak.ir/vpg/api/v0/Advice/Verify',$str_data);
+        $arrres 	= json_decode($res);
+    }
+    if($arrres->ResCode!=-1 && $ResCode==0) {
+        // Check Transaction ID by WHMCS
+        checkCbTransID($arrres->RetrivalRefNo);
+        $log['Transaction'] =   $arrres->RetrivalRefNo;
+        $log['TRACENO']     =   $arrres->SystemTraceNo;
+        payment_success($log);
+        addInvoicePayment($invoice_id, $arrres->RetrivalRefNo, $amount, 0, $cb_gw_name);
+    } else {
+        $log['Error']  = translate_error($ResCode);
+        payment_failed($log);
+    }
     // print("<pre>".print_r($cb_output,true)."</pre>");
     redirect($invoice_URL);
 }
