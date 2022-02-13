@@ -43,10 +43,11 @@ function IranMelliBank_config()
     return [
         "FriendlyName" 			 => ["Type" => "System", "Value" => "بانک ملی ایران"],
         // Gateway Setup
-        "cb_gw_method"           => ["FriendlyName" => "روش اتصال", "Type" => "radio", "Options" => "Token,Old"],
-        "cb_gw_id"               => ["FriendlyName" => "کد پذيرنده", "Type" => "text", "Size" => "50"],
-        "cb_gw_pass"             => ["FriendlyName" => "رمز پذيرنده", "Type" => "text", "Size" => "50"],
-        "cb_gw_unit"             => ["FriendlyName" => "واحد پول سیستم", "Type" => "dropdown", "Options" => ["1" => "ریال", "10" => "تومان"],"Description" => "لطفا واحد پول سیستم خود را انتخاب کنید."],
+        // Gateway Setup
+        "cb_gw_MerchantId"   => ["FriendlyName" => "کد پذيرنده", "Type" => "text", "Size" => "50"],
+        "cb_gw_TerminalId"   => ["FriendlyName" => "شماره ترمینال", "Type" => "text", "Size" => "50"],
+        "cb_gw_TerminalKey"  => ["FriendlyName" => "کلید تراکنش", "Type" => "text", "Size" => "50"],
+        "cb_gw_unit"         => ["FriendlyName" => "واحد پول سیستم", "Type" => "dropdown", "Options" => ["1" => "ریال", "10" => "تومان"],"Description" => "لطفا واحد پول سیستم خود را انتخاب کنید."],
         // Email Notification
         "cb_email"               => ["FriendlyName" => "Email Notify", "Type" => "", "Description" => "<i class='far fa-envelope'></i> ارسال هشدار پرداخت به پست‌الکترونیک"],
         "cb_email_on_success"    => ["FriendlyName" => "On Success", "Type" => "dropdown", "Options" => ["0" => "خیر", "1" => "بله"],"Description" => "ارسال هشدار تراکنش موفق به پست‌الکترونیک"],
