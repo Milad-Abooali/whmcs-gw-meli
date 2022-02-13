@@ -184,5 +184,4 @@ elseif ($action==='send'){
     } else {
         show_error($arrres->Description);
     }
-    exit;
 }
