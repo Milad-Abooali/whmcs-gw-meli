@@ -186,6 +186,38 @@ function translate_error($ResCode='')
     return $prompt;
 }
 
+/**
+ * Sing Maker
+ * @param $str
+ * @param $key
+ * @return false|string
+ */
+function sing_maker($str, $key)
+{
+    $method 	= 'DES-EDE3';
+    $iv 		= openssl_random_pseudo_bytes(openssl_cipher_iv_length($method));
+    return openssl_encrypt($str, $method, $key, 0, $iv);
+}
+
+/**
+ * Curl Webservice
+ * @param $url
+ * @param false $data
+ * @return bool|string
+ */
+function curl_webservice($url, $data = false)
+{
+    $curl = curl_init($url);
+    curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "POST");
+    curl_setopt($curl, CURLOPT_POSTFIELDS,$data);
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($curl, CURLOPT_HTTPHEADER, array('Content-Type: application/json','Content-Length: ' . strlen($data)));
+    $result = curl_exec($curl);
+    curl_close($curl);
+    return $result;
+}
+
 if($action==='callback') {
     if(empty($invoice_id)) die('Invoice ID Missing!');
     $cb_output['invoice_id'] = $invoice_id;
