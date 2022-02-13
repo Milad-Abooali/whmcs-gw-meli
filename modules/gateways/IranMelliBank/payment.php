@@ -180,11 +180,9 @@ elseif ($action==='send'){
     $res 		= curl_webservice('https://sadad.shaparak.ir/vpg/api/v0/Request/PaymentRequest',$str_data);
     $arrres 	= json_decode($res);
     if($arrres->ResCode==0) {
-        $Token 	= $arrres->Token;
-        $url 	= "https://sadad.shaparak.ir/VPG/Purchase?Token=$Token";
-        header("Location:$url");
-        exit;
+        redirect("https://sadad.shaparak.ir/VPG/Purchase?Token=".$arrres->Token);
     } else {
-        die($arrres->Description);
+        show_error($arrres->Description);
     }
+    exit;
 }
