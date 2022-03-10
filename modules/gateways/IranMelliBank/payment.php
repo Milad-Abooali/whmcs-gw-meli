@@ -5,7 +5,7 @@
  * IranGateway.php
  * Send Request & Callback
  * @author           Milad Abooali <m.abooali@hotmail.com>
- * @version          1.0
+ * @version          1.1
  **************************************************************************
  * @noinspection PhpUnused
  * @noinspection PhpUndefinedFunctionInspection
